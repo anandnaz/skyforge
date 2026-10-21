@@ -21,4 +21,4 @@ Open `index.html` in a browser. There is no build step and no dependencies.
 4. After a minute, the site is live at `https://<your-username>.github.io/<repository-name>/`.
 
 ## Note
-All numbers are estimates for planning. Confirm specs with the manufacturer, and follow your local drone rules.
+All numbers are estimates for planning. Confirm specs with the manufacturer and follow your local drone rules.
