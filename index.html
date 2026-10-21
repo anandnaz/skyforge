@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Plan a drone build part by part. Skyforge checks compatibility, estimates thrust and flight time, and gives a wiring checklist.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%9A%81%3C/text%3E%3C/svg%3E">
+<title>Skyforge · Drone Build Lab</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+:root{--bg:#eef2f6;--panel:#fff;--ink:#14233a;--mute:#5d6b80;--line:#d3dbe6;--acc:#1f5fd6;--accbg:#e6eefc;--ok:#18794e;--warn:#a96a00;--bad:#b3392f;--dis:#f3f5f8;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1828;--panel:#16243a;--ink:#e6edf7;--mute:#93a3bb;--line:#2a3b56;--acc:#6ea2ff;--accbg:#1c3358;--ok:#4cc38a;--warn:#e5ad4a;--bad:#ff8a7f;--dis:#122035;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e1828;--panel:#16243a;--ink:#e6edf7;--mute:#93a3bb;--line:#2a3b56;--acc:#6ea2ff;--accbg:#1c3358;--ok:#4cc38a;--warn:#e5ad4a;--bad:#ff8a7f;--dis:#122035;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.45 Barlow,system-ui,sans-serif}
+header{padding:28px 20px 8px;max-width:1180px;margin:0 auto}
+h1{font:700 40px/1 'Barlow Condensed',Impact,sans-serif;margin:0 0 6px;letter-spacing:.2px}
+header p{margin:0;color:var(--mute);max-width:62ch}
+main{max-width:1180px;margin:0 auto;padding:16px 20px 40px;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+@media(max-width:860px){main{grid-template-columns:1fr}.spec{position:static!important}}
+.step{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin-bottom:14px;padding:14px 14px 12px}
+.step h2{font:700 22px/1.1 'Barlow Condensed',sans-serif;margin:0;display:flex;gap:8px;align-items:center}
+.step .sub{color:var(--mute);font-size:13px;margin:2px 0 10px}
+.badge{font:600 12px Barlow,sans-serif;border-radius:20px;padding:2px 9px;background:var(--dis);color:var(--mute);border:1px solid var(--line)}
+.badge.done{background:var(--accbg);color:var(--acc);border-color:transparent}
+.badge.stuck{color:var(--bad);border-color:var(--bad);background:transparent}
+.opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.opt{all:unset;box-sizing:border-box;cursor:pointer;border:1.5px solid var(--line);border-radius:8px;padding:10px 11px;display:block;background:var(--panel)}
+.opt:hover:not([aria-disabled="true"]){border-color:var(--acc)}
+.opt:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.opt[aria-pressed="true"]{border-color:var(--acc);background:var(--accbg)}
+.opt[aria-disabled="true"]{background:var(--dis);cursor:not-allowed}
+.opt[aria-disabled="true"] .nm,.opt[aria-disabled="true"] .sp{opacity:.55}
+.nm{font-weight:600;display:flex;justify-content:space-between;gap:8px}
+.pr{color:var(--mute);font-weight:500}
+.sp{font-size:13px;color:var(--mute);margin-top:2px}
+.why{font-size:12.5px;color:var(--bad);margin-top:6px;font-weight:500}
+.spec{position:sticky;top:calc(12px + env(safe-area-inset-top,0px));background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+.spec h2{font:700 22px 'Barlow Condensed',sans-serif;margin:0 0 8px}
+.bar{height:6px;background:var(--dis);border-radius:4px;overflow:hidden;border:1px solid var(--line);margin-bottom:12px}
+.bar i{display:block;height:100%;background:var(--acc);transition:width .25s}
+dl{margin:0;display:grid;grid-template-columns:1fr auto;gap:6px 10px}
+dt{color:var(--mute)}dd{margin:0;font-weight:600;text-align:right}
+.sel{margin:0 0 12px;padding:0;list-style:none;font-size:14px}
+.sel li{display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px solid var(--line)}
+.sel span:first-child{color:var(--mute);flex:none}
+.sel span:last-child{text-align:right}
+.verdict{margin:12px 0;padding:10px 12px;border-radius:8px;background:var(--dis);border-left:4px solid var(--mute);font-size:14px}
+.verdict.ok{border-color:var(--ok)}.verdict.warn{border-color:var(--warn)}.verdict.bad{border-color:var(--bad)}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+button.b{font:600 14px Barlow,sans-serif;border-radius:8px;padding:8px 14px;border:1.5px solid var(--acc);background:var(--acc);color:#fff;cursor:pointer}
+button.b.alt{background:transparent;color:var(--acc)}
+button.b:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+pre{white-space:pre-wrap;font:13px/1.5 Barlow,sans-serif;background:var(--dis);padding:10px;border-radius:8px;margin:8px 0 0;overflow-x:auto}
+.note{font-size:12.5px;color:var(--mute);margin-top:12px}
+.tools{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:14px}
+.presets{display:flex;flex-wrap:wrap;gap:6px;align-items:center;width:100%;font-weight:600}
+.presets .b{padding:5px 10px;font-size:13px}
+.tools label{font-size:13px;color:var(--mute);display:flex;gap:6px;align-items:center}
+.tools select,.tools input[type=number]{font:inherit;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink)}
+.tools input[type=number]{width:110px}
+.cell{display:flex;flex-direction:column;gap:4px}.cell .opt{width:100%}
+.meta{font-size:12px;color:var(--mute);display:flex;gap:4px 10px;flex-wrap:wrap;padding:0 4px}.meta a{color:var(--acc)}
+.stk.in{color:var(--ok)}.stk.low{color:var(--warn)}.stk.out{color:var(--bad)}
+details.cat{width:100%;font-size:13px}details.cat textarea{width:100%;margin-top:6px;font:12px/1.4 Barlow,sans-serif;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink)}
+details.cat .b{margin:6px 8px 0 0;padding:5px 10px;font-size:13px}
+.sp2{margin-top:10px}
+.cr{margin:11px 0}.cr.off{opacity:.65}.ch2{display:flex;justify-content:space-between;gap:10px;font-size:13.5px}.ch2 span:last-child{color:var(--mute);text-align:right}
+.cb{position:relative;height:10px;background:var(--dis);border:1px solid var(--line);border-radius:5px;margin-top:4px;overflow:hidden}.cb i{position:absolute;top:0;bottom:0;display:block}.cl{left:0;background:var(--acc)}.ch3{background:var(--acc);opacity:.3}.cb b{position:absolute;top:0;bottom:0;width:3px;background:var(--ink)}
+.g3{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:14px}.g3 summary{cursor:pointer}
+.g3t{display:flex;flex-wrap:wrap;gap:8px 14px;margin:10px 0;font-size:13px;color:var(--mute)}.g3t label{display:flex;gap:6px;align-items:center}
+.g3t select{font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink)}
+.g3 canvas{width:100%;height:360px;display:block;touch-action:none;cursor:grab;border-radius:8px;background:var(--dis)}.g3 canvas:focus-visible{outline:3px solid var(--acc)}
+.g3l{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:12.5px;color:var(--mute);margin-top:8px}.g3l i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px}
+.fx{border-bottom:1px solid var(--line);margin-bottom:10px;padding-bottom:6px}.fxt{font-size:13.5px;margin:4px 0 2px}.fxl{display:flex;gap:14px;font-size:12px;color:var(--mute);margin-bottom:4px}.fxl i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.fxr{margin:9px 0}.fxh{display:flex;justify-content:space-between;font-size:13px}.fxh .good{color:var(--ok);font-weight:600}.fxh .bad{color:var(--bad);font-weight:600}
+.fxb{height:7px;background:var(--dis);border-radius:4px;margin-top:3px;overflow:hidden}.fxb i{display:block;height:100%;transition:width .2s}.was{background:var(--mute)}.now{background:var(--acc)}
+.fxv{display:flex;justify-content:space-between;font-size:12px;color:var(--mute);margin-top:2px}
+@media(min-width:861px){.spec{max-height:calc(100vh - 24px - env(safe-area-inset-top,0px));overflow-y:auto}}.sp2 summary{cursor:pointer}.chk{margin:8px 0 0;padding-left:18px;font-size:13.5px}.chk li{margin:4px 0}
+:root{--bg:#e8eef4;--acc:#d4441a;--accbg:#fdece5;--grid:rgba(15,31,51,.05)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0a1320;--acc:#ff7a45;--accbg:#3a2418;--grid:rgba(255,255,255,.045)}:root:not([data-theme="light"]) button.b:not(.alt){color:#1b0f08}}
+:root[data-theme="dark"]{--bg:#0a1320;--acc:#ff7a45;--accbg:#3a2418;--grid:rgba(255,255,255,.045)}
+:root[data-theme="dark"] button.b:not(.alt){color:#1b0f08}
+body{background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:28px 28px;background-attachment:fixed}
+header{padding:38px 20px 14px}
+.eyebrow{font:600 12px Barlow,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--acc)}
+h1{font-size:58px;margin-top:4px}
+h1::after{content:"";display:block;width:72px;height:4px;border-radius:2px;background:var(--acc);margin-top:10px}
+.step{box-shadow:0 10px 26px -20px rgba(15,31,51,.55)}
+.intro .step{animation:rise .55s both}.intro .step:nth-child(2){animation-delay:.06s}.intro .step:nth-child(3){animation-delay:.12s}.intro .step:nth-child(4){animation-delay:.18s}.intro .step:nth-child(5){animation-delay:.24s}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}}
+.opt{transition:transform .15s,box-shadow .15s,border-color .15s}
+.opt:hover:not([aria-disabled="true"]){transform:translateY(-2px);box-shadow:0 8px 18px -10px var(--acc)}
+.opt[aria-pressed="true"]{box-shadow:0 0 0 3px var(--accbg),0 8px 20px -10px var(--acc)}
+button.b{border-radius:999px}button.b:disabled{opacity:.5;cursor:not-allowed}
+#drone{border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:radial-gradient(circle at 50% 48%,var(--accbg),transparent 72%)}
+.dsvg{width:100%;height:auto;display:block;overflow:visible}
+.dsvg [data-p]{cursor:pointer;transition:filter .2s}.dsvg [data-p]:hover,.dsvg [data-p].on{filter:drop-shadow(0 0 5px var(--acc))}
+.d-gh *{fill:none;stroke:var(--mute);stroke-width:1.4;stroke-dasharray:3 3}
+.d-on *{fill:var(--panel);stroke:var(--ink);stroke-width:1.6}
+.d-on .arm,.d-gh .arm{stroke-width:5;stroke-linecap:round;fill:none;stroke-dasharray:none}.d-gh .arm{stroke-width:3;stroke-dasharray:3 3}
+.pr-on ellipse{fill:var(--acc);fill-opacity:.5;stroke:var(--acc);stroke-width:1}
+.pr-gh circle{fill:none;stroke:var(--mute);stroke-dasharray:3 3}
+.spin{transform-box:fill-box;transform-origin:center;animation:spin var(--d,.6s) linear infinite}.rev{animation-direction:reverse}
+@keyframes spin{to{transform:rotate(360deg)}}
+#drone.lift .dsvg{animation:bob 1.3s ease-in-out infinite;filter:drop-shadow(0 22px 8px rgba(0,0,0,.25))}
+@keyframes bob{0%,100%{transform:translateY(-6px) scale(1.04)}50%{transform:translateY(-14px) scale(1.07)}}
+#drone.lift .spin{animation-duration:calc(var(--d,.6s)*.7)}
+#drone.shake .dsvg{animation:shk .5s}@keyframes shk{20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+.hud{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 12px;font-size:13px}
+.hbar{flex:1 1 100%;height:6px;border-radius:4px;background:var(--dis);overflow:hidden;border:1px solid var(--line)}.hbar i{display:block;height:100%;width:100%;background:var(--ok)}
+#fly:not(:disabled){animation:pls 2s infinite}@keyframes pls{0%,100%{box-shadow:0 0 0 0 var(--accbg)}50%{box-shadow:0 0 0 7px var(--accbg)}}
+.flash{animation:fl 1s}@keyframes fl{30%{box-shadow:0 0 0 4px var(--acc)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+#shl,#shin{font:inherit;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink)}#shl{width:100%;margin:6px 0}#shin{width:min(100%,250px)}
+.wc{font-size:13px;margin:0 0 12px;padding:8px 10px;border-left:4px solid var(--warn);background:var(--dis);border-radius:6px}
+.foot{max-width:1180px;margin:0 auto;padding:10px 20px 34px;color:var(--mute);font-size:12.5px}
+.gl dt{font-weight:600;margin-top:6px}.gl dd{margin:0;color:var(--mute)}
+@media print{body{background:#fff;color:#000}.tools,main>section,header details,button{display:none!important}main{display:block}.spec{position:static!important;max-height:none!important;border:0}}
+.ba{margin:0 0 12px}.ba summary{cursor:pointer;margin-bottom:6px}.dcmp{display:grid;grid-template-columns:1fr 1fr;gap:8px}.dcmp figure{margin:0;border:1px solid var(--line);border-radius:10px;padding:4px;background:var(--dis)}.dcmp figcaption{font-size:12px;font-weight:600;color:var(--mute);text-align:center}.chg{margin:8px 0 0;padding-left:18px;font-size:13px}
+</style>
+</head>
+<body>
+<noscript><p style="padding:20px">This tool needs JavaScript to run. Please turn it on and reload.</p></noscript>
+<header>
+<div class="eyebrow">Compatibility-checked build lab</div><h1>Skyforge</h1>
+<p>Choose a part in each step. Options that don’t work with your earlier choices are greyed out and tell you why. Click a selected part again to remove it.</p>
+<details class="cat" style="margin-top:14px"><summary><b>New to drones? Quick guide and glossary</b></summary><ol><li>Start with a quick-start build, or pick a frame. The frame sets the largest propeller and the stack mounting.</li><li>Work down the steps. Greyed-out parts don’t work with what you’ve chosen, and each one says why.</li><li>When all six core parts are chosen, check thrust-to-weight and flight time, then press Test flight.</li><li>Use Undo if you change your mind, Share build to send it, and Print to keep a copy.</li></ol><dl class="gl"><dt>Frame</dt><dd>The body and arms. Its size decides the largest propeller.</dd><dt>Motor (for example 2207 2750KV)</dt><dd>The first four digits are the motor’s stator width and height in millimetres. KV is spin speed per volt: lower KV goes with more battery cells.</dd><dt>Propeller (for example 5-inch tri-blade)</dt><dd>Size in inches and blade count. More blades give more grip; fewer blades are more efficient.</dd><dt>ESC</dt><dd>Electronic speed controller. It powers the motors, and its amp rating must cover what they draw.</dd><dt>Flight controller (FC)</dt><dd>The drone’s brain. Its mounting pattern, such as 30x30, must match the frame and ESC.</dd><dt>Battery (for example 4S 1500mAh 100C)</dt><dd>S is the number of cells, which sets voltage. mAh is capacity. The C rating is how much current it can deliver.</dd><dt>Thrust-to-weight</dt><dd>Maximum thrust divided by weight. Around 2 can barely fly; 4 to 8 suits sport flying.</dd></dl></details>
+</header>
+<main>
+<section aria-label="Build steps"><div class="tools"><div class="presets" id="presets"></div><label><input type="checkbox" id="hide"> Hide incompatible parts</label><details class="cat"><summary>Use your own parts catalog (JSON)</summary><p>Paste a catalog to replace the built-in parts with real products. Each part needs id, n (name) and w (weight in g). Optional: url, stock (in, low or out), dim (battery mm), bay (frame battery bay mm), tab (motor thrust and amps points).</p><textarea id="cat" rows="8" aria-label="Parts catalog JSON"></textarea><button class="b alt" id="cattpl">Fill with current parts</button><button class="b" id="catload">Load catalog</button><span id="catmsg" role="status"></span></details><details class="cat" id="shr"><summary>Share or load a build</summary><p>Your build code is kept in this page’s link as you pick parts. Send the link, or paste someone’s build code below.</p><input id="shl" readonly aria-label="Share link"><div><button class="b alt" id="shcopy">Copy link</button> <input id="shin" placeholder="Paste a build code or link" aria-label="Build code"> <button class="b" id="shload">Load</button> <span id="shmsg" role="status"></span></div></details></div><details class="g3" id="g3" open><summary><b>3D view of possible builds</b></summary><div class="g3t"><label>View <select id="gv"><option value="d">Dots (every build)</option><option value="s">Surface (motor vs battery)</option></select></label><label>Colour by <select id="gc"><option value="f">Frame size</option><option value="m">Motor</option><option value="b">Battery cells</option></select></label><label>Across <select id="gx"></select></label><label>Up <select id="gy"></select></label><label>Depth <select id="gz"></select></label><label><input type="checkbox" id="gm" checked> Only builds that match my choices</label></div><canvas id="g3c" tabindex="0" aria-label="3D scatter of possible builds. Drag or use arrow keys to rotate, click a dot to use that build."></canvas><div class="g3l" id="g3g"></div><p class="note" id="g3i" aria-live="polite"></p></details><details class="g3" id="g2" open><summary><b>Compare all options in a step</b></summary><div class="g3t"><label>Step <select id="cs"></select></label><label>Measure <select id="cm"></select></label></div><div id="cmp"></div><p class="note">Each bar covers every complete build that works with that part. Solid = lowest value, light = up to the highest, black tick = average, ★ = best average. When your other choices fix the build, it is a single value.</p></details><div id="steps"></div></section>
+<aside class="spec" aria-live="polite" id="spec"></aside>
+</main>
+<footer class="foot">Skyforge is an educational planning tool. Thrust, current and flight time are estimates, so confirm specs with the manufacturer. Charge and store LiPo batteries safely (fireproof bag, never unattended), test with propellers off, fly only in safe and legal places, and follow your local drone rules.<details class="cat" id="legal"><summary>Terms, privacy and disclosures</summary><p><b>Use of this tool.</b> Skyforge is provided for planning and learning, as is and without any warranty. It is not engineering or legal advice. You are responsible for checking part specifications, assembling your drone safely and flying within your local laws.</p><p><b>Privacy.</b> Skyforge has no accounts, asks for no personal information and does not track you. Your choices stay in your browser and in any link you choose to share. The page loads its fonts from Google Fonts, so Google may receive your device’s IP address and browser details when the fonts load.</p><p><b>Links and disclosures.</b> Part links open other websites that this site does not control. “Search online” links open a web search in a new tab. If this site earns a commission from a link, that link will be marked as an affiliate link.</p></details></footer>
+<script>
+// ---------- Part data ----------
+var EXTRA={w:15,pr:15,label:'Wiring, connectors and hardware'};
+var D={
+frame:[
+{id:'f3',n:'3" Cinewhoop duct frame',size:3,mount:20,maxB:1300,w:55,pr:28,d:'Ducted, indoor and cinematic'},
+{id:'f5',n:'5" Freestyle frame',size:5,mount:30,maxB:2200,w:115,pr:40,d:'All-round freestyle and racing'},
+{id:'f7',n:'7" Long-range frame',size:7,mount:30,maxB:3000,w:150,pr:55,d:'Efficient cruising, long flights'},
+{id:'f10',n:'10" Heavy-lift frame',size:10,mount:30,maxB:6000,w:380,pr:120,d:'Large props, payload capable'}],
+motor:[
+{id:'m1',n:'1404 3850KV',cls:3,c:[3,4],maxA:16,t:400,w:17,pr:14},
+{id:'m2',n:'1507 2800KV',cls:3,c:[3,4],maxA:22,t:520,w:20,pr:18},
+{id:'m3',n:'2207 2750KV',cls:5,c:[3,4],maxA:38,t:1200,w:32,pr:18},
+{id:'m4',n:'2207 1750KV',cls:5,c:[5,6],maxA:35,t:1450,w:33,pr:20},
+{id:'m5',n:'2806.5 1500KV',cls:7,c:[3,4],maxA:40,t:1600,w:42,pr:24},
+{id:'m6',n:'2806.5 1300KV',cls:7,c:[5,6],maxA:38,t:1900,w:44,pr:26},
+{id:'m7',n:'3515 400KV',cls:10,c:[6,6],maxA:45,t:3000,w:105,pr:42},
+{id:'m8',n:'4014 330KV',cls:10,c:[6,6],maxA:55,t:3800,w:130,pr:55}],
+prop:[],
+esc:[
+{id:'e1',n:'4-in-1 25A',amps:25,c:[2,4],mount:20,w:9,pr:28},
+{id:'e2',n:'4-in-1 35A',amps:35,c:[3,6],mount:20,w:11,pr:40},
+{id:'e3',n:'4-in-1 45A',amps:45,c:[3,6],mount:30,w:16,pr:50},
+{id:'e4',n:'4-in-1 65A',amps:65,c:[4,6],mount:30,w:22,pr:72}],
+fc:[
+{id:'c1',n:'F405 flight controller',mount:20,w:6,pr:30},
+{id:'c2',n:'F722 flight controller',mount:20,w:7,pr:48},
+{id:'c3',n:'F405 flight controller',mount:30,w:8,pr:32},
+{id:'c4',n:'F722 flight controller',mount:30,w:9,pr:50},
+{id:'c5',n:'H743 flight controller',mount:30,w:10,pr:78}],
+battery:[
+{id:'b1',n:'3S 1300mAh 75C',cells:3,mAh:1300,C:75,w:120,pr:16},
+{id:'b2',n:'4S 850mAh 75C',cells:4,mAh:850,C:75,w:95,pr:14},
+{id:'b3',n:'4S 1500mAh 100C',cells:4,mAh:1500,C:100,w:180,pr:22},
+{id:'b4',n:'4S 2200mAh 50C',cells:4,mAh:2200,C:50,w:260,pr:24},
+{id:'b5',n:'6S 1100mAh 100C',cells:6,mAh:1100,C:100,w:190,pr:28},
+{id:'b6',n:'6S 1800mAh 100C',cells:6,mAh:1800,C:100,w:290,pr:38},
+{id:'b7',n:'6S 3000mAh 60C',cells:6,mAh:3000,C:60,w:480,pr:48},
+{id:'b8',n:'6S 5000mAh 50C',cells:6,mAh:5000,C:50,w:700,pr:70}],
+rx:[
+{id:'r1',n:'ELRS 2.4GHz receiver',w:1,pr:12,d:'Low latency, medium to long range'},
+{id:'r2',n:'ELRS 900MHz receiver',w:2,pr:18,d:'Long range, handles obstacles well'},
+{id:'r3',n:'Crossfire Nano receiver',w:2,pr:40,d:'Proven long-range link'},
+{id:'r4',n:'FrSky 2.4GHz receiver',w:2,pr:20,d:'Works with older FrSky radios, shorter range'}],
+vtx:[
+{id:'v1',n:'Analog nano camera + 25–400mW transmitter',w:12,pr:28,d:'Lowest latency, standard definition'},
+{id:'v2',n:'Analog micro camera + 800mW transmitter',w:20,pr:45,big:1,d:'Better range and image than nano analog'},
+{id:'v3',n:'HD digital kit (full size)',w:38,pr:130,big:1,d:'Crisp HD live view and onboard recording'},
+{id:'v4',n:'HD digital kit (nano)',w:22,pr:150,d:'HD in a compact, lightweight size'}],
+gps:[
+{id:'g1',n:'GPS and compass module',w:12,pr:20,d:'Return-to-home and position hold'},
+{id:'g2',n:'GPS and compass with antenna mast',w:22,pr:34,big:1,d:'Better satellite lock for long flights'}]
+};
+[3,5,7,10].forEach(function(s,i){
+ var w=[2,4,7,18][i],p=[4,5,6,14][i];
+ D.prop.push({id:'p'+s+'a',n:s+'" tri-blade',size:s,f:1,eff:1,w:w+1,pr:p,d:'More grip, punchy response'});
+ D.prop.push({id:'p'+s+'b',n:s+'" bi-blade',size:s,f:.92,eff:1.12,w:w,pr:p,d:'Efficient, longer flights'});
+});
+var STEPS=[
+['frame','Frame','Sets the prop size, stack mounting and maximum battery'],
+['motor','Motors','Size class must match the frame; voltage range limits the battery'],
+['prop','Propellers','Must match the motor’s size class'],
+['esc','ESC','Needs enough amps for the motors and the right mounting pattern'],
+['fc','Flight controller','Mounting pattern must match the frame and ESC'],
+['battery','Battery','Cell count, size and discharge must suit frame, motors and ESC'],
+['rx','Receiver (optional)','Your radio link to the drone. Pick by range and the radio you own'],
+['vtx','Camera and video link (optional)','Analog is light and fast; HD looks better but weighs more'],
+['gps','GPS (optional)','Adds return-to-home and position hold']];
+var CORE=['frame','motor','prop','esc','fc','battery'],sortMode='',budget=0,hideBad=false;
+var PRESETS=[
+{n:'Cinewhoop 3"',ids:['f3','m2','p3a','e1','c1','b1','r1','v4']},
+{n:'Freestyle 5"',ids:['f5','m3','p5a','e3','c4','b3','r1','v3']},
+{n:'Racing 5"',ids:['f5','m4','p5a','e3','c3','b5','r1','v1']},
+{n:'Long range 7"',ids:['f7','m5','p7b','e3','c5','b4','r3','v3','g2']},
+{n:'Heavy lift 10"',ids:['f10','m7','p10a','e3','c5','b7','r2','v1','g1']}];
+function q(t){return t==='motor'||t==='prop'?4:1}
+var FXR=[['w','Weight',' g',0,-1],['th','Max thrust',' g',0,1],['tw','Thrust-to-weight',':1',1,1],['mi','Flight time',' min',1,1]],LAST=null,fxView=null;
+function metrics(){var s=stats(),m=SEL.motor,r=SEL.prop;return{w:s.w?s.w:null,pr:s.pr?s.pr:null,th:m&&r?4*m.t*r.f:null,tw:s.done?s.tw:null,mi:s.done?s.mins:null}}
+function trial(t,p){var o=SEL[t];SEL[t]=p;var m=metrics();SEL[t]=o;return m}
+function fv(v,r){return v==null?'\u2014':r[2]==='$'?'$'+v.toFixed(0):v.toFixed(r[3])+r[2]}
+function fxHtml(){var F=fxView||LAST;if(!F)return '<p class="note">Point at a part, or choose one, to see how it changes weight, thrust and flight time.</p>';
+ var h='<div class="fxt"><b>'+(fxView?'Preview: ':'Last change: ')+esc(F.name)+'</b></div><div class="fxl"><span><i class="was"></i>Before</span><span><i class="now"></i>After</span></div>';
+ FXR.forEach(function(r){var x=F.a[r[0]],y=F.b[r[0]];if(x==null&&y==null)return;var mx=Math.max(x||0,y||0)||1,d=(x!=null&&y!=null)?y-x:null,cls='',txt;
+  if(d==null)txt=y==null?'removed':'now shown';else{var rd=Math.round(d*Math.pow(10,r[3]));txt=rd===0?'no change':(d>0?'\u25b2 +':'\u25bc \u2212')+(r[2]==='$'?'$':'')+Math.abs(d).toFixed(r[3])+(r[2]==='$'?'':r[2]);if(rd!==0)cls=d*r[4]>0?'good':'bad'}
+  h+='<div class="fxr"><div class="fxh"><span>'+r[1]+'</span><span class="'+cls+'">'+txt+'</span></div><div class="fxb"><i class="was" style="width:'+(x==null?0:x/mx*100)+'%"></i></div><div class="fxb"><i class="now" style="width:'+(y==null?0:y/mx*100)+'%"></i></div><div class="fxv"><span>'+fv(x,r)+'</span><span>'+fv(y,r)+'</span></div></div>'});
+ return h}
+// Representative thrust (g) and current (A) points per motor with a typical prop. Replace via catalog tab field with manufacturer data.
+var TABS={m1:[[60,1.5],[150,4.5],[270,9.5],[400,16]],m2:[[80,2],[200,6.5],[360,13.5],[520,22]],m3:[[150,3],[420,10],[780,21],[1200,38]],m4:[[170,2.5],[520,9],[1000,21],[1450,35]],m5:[[200,3.5],[600,12],[1100,25],[1600,40]],m6:[[220,3],[700,11],[1350,24],[1900,38]],m7:[[500,3.5],[1300,12],[2200,26],[3000,45]],m8:[[600,3.5],[1600,13],[2800,30],[3800,55]]};
+var BAY={f3:[80,38,30],f5:[140,42,46],f7:[165,48,52],f10:[190,70,60]};
+var BATT={b1:[75,34,24],b2:[72,32,26],b3:[78,36,34],b4:[112,36,36],b5:[72,35,42],b6:[108,35,44],b7:[150,45,44],b8:[150,52,58]};
+var WB={3:140,5:225,7:300,10:450};
+function ampsAt(m,th){var tb=m.tab||TABS[m.id];if(!tb)return m.maxA*Math.pow(th/m.t,1.5);var px=0,py=0;for(var i=0;i<tb.length;i++){if(th<=tb[i][0])return py+(tb[i][1]-py)*(th-px)/(tb[i][0]-px);px=tb[i][0];py=tb[i][1]}return tb[tb.length-1][1]}
+function bayFit(fr,ba){var y=fr.bay||BAY[fr.id],d=ba.dim||BATT[ba.id];if(!y||!d)return null;return(d[0]>y[0]||d[1]>y[1]||d[2]>y[2])?'Battery ('+d.join('x')+' mm) won’t fit the bay ('+y.join('x')+' mm)':null}
+function balance(){var f=SEL.frame,b=SEL.battery;if(!f||!b)return null;var wb=WB[f.size]||250,M=0,S=0;
+ function add(p,k,x){if(p){var mm=p.w*k;M+=mm;S+=mm*x}}
+ add(f,1,0);add(SEL.motor,4,0);add(SEL.prop,4,0);add(SEL.esc,1,0);add(SEL.fc,1,0);add(SEL.vtx,1,.22*wb);add(SEL.gps,1,-.2*wb);add(SEL.rx,1,-.15*wb);
+ var cg=S/(M+b.w),y=f.bay||BAY[f.id],d=b.dim||BATT[b.id];
+ return{cg:cg,pct:Math.abs(cg)/wb*100,shift:-S/b.w,slack:y&&d?(y[0]-d[0])/2:0}}
+function balHtml(){var z=balance();if(!z)return '';var ok=z.pct<3,fix=Math.abs(z.shift)<=z.slack,cls=ok?'ok':fix?'warn':'bad',side=z.cg>0?'nose':'tail',a=Math.abs(z.cg),msg;
+ if(ok)msg='Looks good: about '+a.toFixed(1)+' mm '+side+'-heavy with the battery centred.';
+ else if(fix)msg='With the battery centred it is '+a.toFixed(0)+' mm '+side+'-heavy. Slide the battery about '+Math.abs(z.shift).toFixed(0)+' mm '+(z.shift>0?'forward':'back')+'.';
+ else msg='It is '+a.toFixed(0)+' mm '+side+'-heavy and the battery bay is too short to fix it. Move the camera or GPS, or add a counterweight.';
+ return '<div class="verdict '+cls+'"><b>Balance.</b> '+msg+'</div>'}
+function checklist(){var f=SEL.frame,m=SEL.motor,e=SEL.esc,c=SEL.fc,b=SEL.battery,r=SEL.rx,v=SEL.vtx,g=SEL.gps,L=[],peak=4*m.maxA;
+ L.push('Tin the pads, then solder each motor’s 3 wires to the ESC pads. If a motor spins the wrong way, swap any 2 of its wires or reverse it in software.');
+ L.push('Solder a '+(peak>60?'XT60':'XT30')+' connector to the ESC battery pads (peak draw about '+Math.round(peak)+' A) and add a low-ESR capacitor rated '+(b.cells>4?'35':'25')+' V or more across the pads.');
+ L.push('Mount the ESC and flight controller as a '+f.mount+'x'+f.mount+' stack on soft grommets and join them with the supplied cable or plug.');
+ if(r)L.push(/FrSky/.test(r.n)?'Connect the receiver’s 5 V, ground and SBUS wire to a free UART (some boards need an inverter), then bind it to your radio.':'Connect the receiver’s 5 V and ground, and cross TX to RX and RX to TX on a free UART. Set that UART to the CRSF serial receiver and bind it to your radio.');
+ if(v)L.push(/HD/.test(v.n)?'Power the HD air unit from battery voltage (check its input range), connect it to a UART for on-screen display, and pair it with your goggles.':'Wire the camera and video transmitter to the controller’s camera and VTX pads, using the 5 V, 9 V or battery supply the module needs. Set the channel and power to what is legal where you fly.');
+ if(g)L.push('Connect the GPS to a free UART with 5 V and ground, plus the compass SDA and SCL pads. Fly outdoors with a clear sky for the first satellite lock.');
+ L.push('Flash '+(g?'Betaflight (GPS rescue), INAV or ArduPilot':'Betaflight')+' onto the '+c.n+' with its configurator, using the manufacturer’s target for your board.');
+ L.push('Set the ESC protocol to DShot300 or DShot600, set the battery to '+b.cells+'S, and set warnings at about '+(b.cells*3.5).toFixed(1)+' V with a landing point of '+(b.cells*3.3).toFixed(1)+' V.');
+ L.push('Set your arm switch and a failsafe that disarms or returns home. Check each stick moves the right way on the configurator.');
+ L.push('With props OFF, run the motor test to confirm each motor’s direction. Then fit the props (check the direction marks) and make a first low hover with a charged battery.');
+ return L}
+function meta(t,p){var u=/^https?:/.test(p.url||'')?p.url:'https://www.google.com/search?q='+encodeURIComponent(p.n+' '+(t==='fc'?'flight controller':t==='vtx'?'fpv camera vtx':t==='esc'?'drone ESC':'drone '+t)),s={'in':'In stock','low':'Low stock','out':'Out of stock'}[p.stock]||'';
+ return '<div class="meta"><a href="'+u.replace(/"/g,'%22')+'" target="_blank" rel="noopener">'+(/^https?:/.test(p.url||'')?'View product':'Search online')+'</a>'+(s?'<span class="stk '+p.stock+'">'+s+'</span>':'')+'</div>'}
+function spent(){return stats().pr}
+function apply(ids){SEL={};LAST=null;fxView=null;SNAP=null;ids.forEach(function(id){Object.keys(D).forEach(function(k){D[k].forEach(function(p){if(p.id===id)SEL[k]=p})})});render()}
+var SEL={};
+
+// ---------- Compatibility rules ----------
+function overlap(a,b){return Math.max(a[0],b[0])<=Math.min(a[1],b[1])}
+function inR(n,r){return n>=r[0]&&n<=r[1]}
+function why(t,p){
+ var f=SEL.frame,m=SEL.motor,r=SEL.prop,e=SEL.esc,c=SEL.fc,b=SEL.battery,v=SEL.vtx,g=SEL.gps;
+ if(t==='frame'){
+  if(m&&m.cls!==p.size)return 'Chosen motors are '+m.cls+'" class';
+  if(r&&r.size!==p.size)return 'Chosen props are '+r.size+'"';
+  if(e&&e.mount!==p.mount)return 'ESC is '+e.mount+'x'+e.mount+', frame needs '+p.mount+'x'+p.mount;
+  if(c&&c.mount!==p.mount)return 'Controller is '+c.mount+'x'+c.mount+', frame needs '+p.mount+'x'+p.mount;
+  if(b&&b.mAh>p.maxB)return 'Battery too big (frame fits up to '+p.maxB+'mAh)';
+ }
+ if(t==='motor'){
+  if(f&&f.size!==p.cls)return 'Frame takes '+f.size+'" motors, not '+p.cls+'"';
+  if(r&&r.size!==p.cls)return 'Props are '+r.size+'", motors need '+p.cls+'"';
+  if(e&&e.amps<p.maxA)return 'ESC gives '+e.amps+'A, motors need '+p.maxA+'A';
+  if(e&&!overlap(e.c,p.c))return 'ESC and motors share no battery size';
+  if(b&&!inR(b.cells,p.c))return 'Motors run on '+rng(p.c)+', battery is '+b.cells+'S';
+ }
+ if(t==='prop'){
+  if(f&&f.size!==p.size)return 'Frame takes '+f.size+'" props';
+  if(m&&m.cls!==p.size)return 'Motors are made for '+m.cls+'" props';
+ }
+ if(t==='esc'){
+  if(f&&f.mount!==p.mount)return 'Frame needs '+f.mount+'x'+f.mount+' mounting';
+  if(c&&c.mount!==p.mount)return 'Controller is '+c.mount+'x'+c.mount;
+  if(m&&p.amps<m.maxA)return 'Only '+p.amps+'A, motors need '+m.maxA+'A';
+  if(m&&!overlap(p.c,m.c))return 'ESC runs '+rng(p.c)+', motors need '+rng(m.c);
+  if(b&&!inR(b.cells,p.c))return 'ESC runs '+rng(p.c)+', battery is '+b.cells+'S';
+ }
+ if(t==='fc'){
+  if(f&&f.mount!==p.mount)return 'Frame needs '+f.mount+'x'+f.mount+' mounting';
+  if(e&&e.mount!==p.mount)return 'ESC is '+e.mount+'x'+e.mount;
+ }
+ if(t==='battery'){
+  if(f&&p.mAh>f.maxB)return 'Too big for frame (max '+f.maxB+'mAh)';
+  if(m&&!inR(p.cells,m.c))return 'Motors need '+rng(m.c)+', this is '+p.cells+'S';
+  if(e&&!inR(p.cells,e.c))return 'ESC supports '+rng(e.c)+' only';
+  if(m&&p.mAh/1000*p.C<2*m.maxA)return 'Can’t supply enough current ('+Math.round(p.mAh/1000*p.C)+'A, needs '+Math.round(2*m.maxA)+'A)';
+ }
+ if((t==='vtx'||t==='gps')&&p.big&&f&&f.size===3)return 'Too large for a 3" frame';
+ if(t==='gps'&&c&&/F405/.test(c.n))return 'Needs an F7 or H7 flight controller';
+ var fr=t==='frame'?p:f,ba=t==='battery'?p:b;
+ if((t==='frame'||t==='battery')&&fr&&ba){var bf=bayFit(fr,ba);if(bf)return bf}
+ if(t==='frame'&&p.size===3&&((v&&v.big)||(g&&g.big)))return 'Chosen '+(v&&v.big?'camera kit':'GPS')+' is too large for a 3" frame';
+ if(t==='fc'&&g&&/F405/.test(p.n))return 'GPS needs an F7 or H7 controller';
+ return null;
+}
+function rng(r){return r[0]===r[1]?r[0]+'S':r[0]+'S–'+r[1]+'S'}
+
+// ---------- Specs shown on cards ----------
+function specs(t,p){
+ if(t==='frame')return p.d+' · '+p.mount+'x'+p.mount+' stack · '+p.w+'g';
+ if(t==='motor')return p.cls+'" class · '+rng(p.c)+' · '+p.maxA+'A · '+p.t+'g thrust';
+ if(t==='prop')return p.d;
+ if(t==='esc')return p.amps+'A per motor · '+rng(p.c)+' · '+p.mount+'x'+p.mount;
+ if(t==='fc')return p.mount+'x'+p.mount+' stack · '+p.w+'g';
+ if(t==='rx'||t==='vtx'||t==='gps')return p.d+' · '+p.w+'g';
+ return p.cells+'S · '+p.mAh+'mAh · '+p.C+'C · '+p.w+'g';
+}
+
+// ---------- Rendering ----------
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+function render(){trackHist();
+ var h='';
+ STEPS.forEach(function(s,i){
+  var t=s[0],list=D[t].slice(),ok=0,out='';
+  if(sortMode)list.sort(function(a,b){return sortMode==='asc'?a.pr-b.pr:b.pr-a.pr});
+  list.forEach(function(p){
+   var w=SEL[t]===p?null:why(t,p);
+   if(!w&&budget&&SEL[t]!==p&&spent()-(SEL[t]?SEL[t].pr*q(t):0)+p.pr*q(t)>budget)w='Over your $'+budget+' budget';
+   if(!w&&p.stock==='out'&&SEL[t]!==p)w='Out of stock';
+   if(!w)ok++;
+   if(w&&hideBad)return;
+   var on=SEL[t]===p;
+   out+='<div class="cell"><button class="opt" data-t="'+t+'" data-id="'+p.id+'" aria-pressed="'+on+'" aria-disabled="'+!!w+'">'+
+    '<div class="nm"><span>'+esc(p.n)+'</span></div>'+
+    '<div class="sp">'+esc(specs(t,p))+'</div>'+(w?'<div class="why">'+esc(w)+'</div>':'')+'</button>'+meta(t,p)+'</div>';
+  });
+  var badge=SEL[t]?'<span class="badge done">Selected</span>':ok===0?'<span class="badge stuck">No compatible parts</span>':'<span class="badge">'+ok+' of '+list.length+' compatible</span>';
+  h+='<div class="step" id="st-'+t+'"><h2>'+(i+1)+'. '+s[1]+' '+badge+'</h2><div class="sub">'+s[2]+'</div><div class="opts">'+out+'</div></div>';
+ });
+ document.getElementById('steps').innerHTML=h;
+ renderSpec();
+ refreshG();
+ refreshC();
+}
+function stats(){
+ var f=SEL.frame,m=SEL.motor,r=SEL.prop,e=SEL.esc,c=SEL.fc,b=SEL.battery;
+ var n=CORE.filter(function(k){return SEL[k]}).length,done=n===6;
+ var w=0,pr=0;
+ Object.keys(SEL).forEach(function(k){var p=SEL[k];if(!p)return;var q=(k==='motor'||k==='prop')?4:1;w+=p.w*q;pr+=p.pr*q});
+ if(n){w+=EXTRA.w;pr+=EXTRA.pr}
+ var o={n:n,done:done,w:w,pr:pr};
+ if(done){
+  o.thrust=4*m.t*r.f;o.tw=o.thrust/w;
+  var hover=4*ampsAt(m,w/4/r.f);o.gpw=(w/4)/(hover/4*b.cells*3.7);
+  o.hoverA=hover;o.mins=Math.min(60,b.mAh/1000*.8/hover*60*r.eff);
+  o.volt=b.cells*3.7;
+ }
+ return o;
+}
+function renderSpec(){
+ var s=stats(),el=document.getElementById('spec');updateShare();
+ var li=STEPS.map(function(x){var p=SEL[x[0]];return '<li><span>'+x[1]+'</span><span>'+(p?esc(p.n):'—')+'</span></li>'}).join('');
+ var h='<div id="drone">'+droneSvg()+'</div>'+hudHtml()+cmpHtml()+'<h2>Your build</h2><div class="bar"><i style="width:'+Math.round(s.n/6*100)+'%"></i></div><div class="fx" id="fx"></div><ul class="sel">'+li+'</ul><dl>'+
+  '<dt>'+(s.done?'Take-off weight':'Weight so far')+'</dt><dd>'+Math.round(s.w)+' g</dd>';
+ if(s.done){
+  h+='<dt>Max thrust</dt><dd>'+Math.round(s.thrust)+' g</dd><dt>Thrust-to-weight</dt><dd>'+s.tw.toFixed(1)+' : 1</dd>'+
+  '<dt>Pack voltage</dt><dd>'+s.volt.toFixed(1)+' V</dd><dt>Hover current</dt><dd>'+s.hoverA.toFixed(1)+' A</dd>'+
+  '<dt>Est. hover flight time</dt><dd>'+s.mins.toFixed(1)+' min</dd>'+
+  '<dt>Hover efficiency</dt><dd>'+s.gpw.toFixed(1)+' g/W</dd><dt>Peak draw / battery limit</dt><dd>'+Math.round(4*SEL.motor.maxA)+' A / '+Math.round(SEL.battery.mAh/1000*SEL.battery.C)+' A</dd>';
+ }
+ h+='</dl>';
+ if(s.done){
+  var v=s.tw<2?['bad','Underpowered. It may struggle to lift off or climb. Pick stronger motors or a lighter battery.']:
+   s.tw<4?['warn','Gentle flyer. Fine for smooth cruising and filming, but not much punch.']:
+   s.tw<8?['ok','Well balanced. Good power for freestyle and sport flying.']:['ok','Very high power. Fast and agile, with shorter flight times.'];
+  h+='<div class="verdict '+v[0]+'"><b>All core parts are compatible.</b> '+v[1]+((!SEL.rx||!SEL.vtx)?' Add a receiver and a camera/video link to make it flyable.':'')+'</div>';
+  h+=balHtml()+'<details class="sp2"><summary><b>Wiring and setup checklist</b></summary><ol class="chk">'+checklist().map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'</ol></details>';
+ }else{
+  h+='<div class="verdict"><b>'+(s.n?(6-s.n)+' step'+(6-s.n>1?'s':'')+' left.':'Start with the frame.')+'</b> Each choice narrows what works in the other steps.</div>';
+ }
+ h+='<div class="btns"><button class="b" id="copy"'+(s.n?'':' disabled')+'>Copy parts list</button><button class="b alt" id="reset">Start over</button><button class="b alt" id="undo"'+(HIST.length?'':' disabled')+'>Undo</button><button class="b alt" id="redo"'+(REDO.length?'':' disabled')+'>Redo</button><button class="b alt" id="print">Print</button><button class="b alt" id="share">Share build</button><button class="b alt" id="snd" aria-pressed="'+Snd.on+'">'+(Snd.on?'Sound on':'Sound off')+'</button><button class="b alt" id="theme">Switch theme</button></div>'+
+  '<pre id="bom" hidden></pre><p class="note">Thrust, current and flight time are rough estimates for planning. Check manufacturer specs before buying.</p>';
+ el.innerHTML=h;
+ document.getElementById('fx').innerHTML=fxHtml();
+}
+function bom(){
+ var s=stats(),L=['Drone build'];
+ STEPS.forEach(function(x){var p=SEL[x[0]];if(p){var q=(x[0]==='motor'||x[0]==='prop')?4:1;L.push(q+' x '+x[1]+': '+p.n)}});
+ L.push('1 x '+EXTRA.label,'Total weight: '+Math.round(s.w)+' g'+(s.done?' · thrust-to-weight '+s.tw.toFixed(1)+':1 · about '+s.mins.toFixed(1)+' min hover':''));
+ return L.join('\n');
+}
+
+// ---------- Events ----------
+document.addEventListener('click',function(ev){
+ var pb=ev.target.closest('[data-pre]');
+ if(pb){apply(PRESETS[pb.dataset.pre].ids);return}
+ var o=ev.target.closest('.opt');
+ if(o){
+  if(o.getAttribute('aria-disabled')==='true')return;
+  var t=o.dataset.t,p=D[t].filter(function(x){return x.id===o.dataset.id})[0];
+  var a0=metrics(),nx=SEL[t]===p?null:p;SNAP=Object.assign({},SEL);SEL[t]=nx;LAST={name:(nx?'Chose ':'Removed ')+p.n,a:a0,b:metrics()};fxView=null;
+  render();return;
+ }
+ var id=ev.target.id;
+ if(id==='reset'){SEL={};LAST=null;fxView=null;SNAP=null;render()}
+ if(id==='theme'){var d=document.documentElement,dark=d.dataset.theme?d.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;d.dataset.theme=dark?'light':'dark'}
+ if(id==='copy'){
+  var pre=document.getElementById('bom');pre.textContent=bom();pre.hidden=false;
+  try{navigator.clipboard.writeText(bom()).then(function(){ev.target.textContent='Copied'},function(){ev.target.textContent='Select the list below'})}catch(x){ev.target.textContent='Select the list below'}
+ }
+});
+document.getElementById('presets').innerHTML='<span>Quick start:</span>'+PRESETS.map(function(p,i){return '<button class="b alt" data-pre="'+i+'">'+p.n+'</button>'}).join('');
+
+
+document.getElementById('hide').onchange=function(){hideBad=this.checked;render()};
+function fxPrev(ev){var o=ev.target.closest&&ev.target.closest('.opt');if(!o||o.getAttribute('aria-disabled')==='true')return;var t=o.dataset.t,p=D[t].filter(function(x){return x.id===o.dataset.id})[0],on=SEL[t]===p;fxView={name:(on?'remove ':'')+p.n,a:metrics(),b:trial(t,on?null:p)};document.getElementById('fx').innerHTML=fxHtml()}
+function fxOff(ev){var o=ev.target.closest&&ev.target.closest('.opt');if(!o||(ev.relatedTarget&&o.contains(ev.relatedTarget)))return;fxView=null;document.getElementById('fx').innerHTML=fxHtml()}
+document.addEventListener('mouseover',fxPrev);document.addEventListener('focusin',fxPrev);document.addEventListener('mouseout',fxOff);document.addEventListener('focusout',fxOff);
+var G={yaw:-.6,pitch:.45,pts:[],proj:[],hov:null,ax:['w','mi','tw'],match:true,all:false,cur:'',view:'d',col:'f',disp:{},pc:{},sp:{},sdisp:{}};
+var GL={mi:['Flight time',' min',1],tw:['Thrust-to-weight',':1',1],w:['Weight',' g',0],th:['Max thrust',' g',0]},GD={w:-1,mi:1,tw:1,th:1},GC={3:'#e07a2f',5:'#1f8fd6',7:'#2fa36b',10:'#8a5cd6'};
+var PAL=['#e07a2f','#1f8fd6','#2fa36b','#8a5cd6','#d6457a','#c9a400','#17a2b8','#6c757d','#a0522d','#3d5afe'];
+function wh(p){return p.cells*3.7*p.mAh/1000}
+function ckey(b){return G.col==='m'?b.ids[1]:G.col==='b'?byId(b.ids[5]).cells:b.sz}
+function cinfo(){var o=[],u={};
+ if(G.col==='m')D.motor.forEach(function(p,i){o.push([p.id,PAL[i%PAL.length],p.n])});
+ else if(G.col==='b'){D.battery.forEach(function(p){u[p.cells]=1});Object.keys(u).map(Number).sort(function(a,b){return a-b}).forEach(function(n,i){o.push([n,PAL[i%PAL.length],n+'S'])})}
+ else{D.frame.forEach(function(p){u[p.size]=1});Object.keys(u).map(Number).sort(function(a,b){return a-b}).forEach(function(n,i){o.push([n,GC[n]||PAL[i%PAL.length],n+'" frame'])})}
+ return o}
+function glegend(){var s=G.view==='s'?'<span>Blue = shorter flight time, orange = longer</span>':cinfo().map(function(x){return '<span><i style="background:'+x[1]+'"></i>'+esc(x[2])+'</span>'}).join('')+'<span>Ring: your build</span>';if(s!==G.lg){G.lg=s;document.getElementById('g3g').innerHTML=s}}
+function startAnim(){G.pc=G.disp||{};G.sp=G.sdisp||{};G.t0=matchMedia('(prefers-reduced-motion: reduce)').matches?0:performance.now()}
+function hue(h){return 'hsl('+Math.round(210-170*Math.max(0,Math.min(1,h)))+',70%,50%)'}
+function surf(c,pj,ink,mute,acc,e){var g={},rs={},cs={},mx=0;
+ G.pts.forEach(function(b){var k=b.ids[1]+'|'+b.ids[5],o=g[k]=g[k]||{s:0,n:0};o.s+=b.mi;o.n++;rs[b.ids[1]]=1;cs[b.ids[5]]=1});
+ var R=D.motor.filter(function(p){return rs[p.id]}),C=D.battery.filter(function(p){return cs[p.id]}).sort(function(a,b){return wh(a)-wh(b)});
+ if(!R.length)return;
+ Object.keys(g).forEach(function(k){g[k].v=g[k].s/g[k].n;mx=Math.max(mx,g[k].v)});
+ var w0=wh(C[0]),w1=wh(C[C.length-1]),sd={};
+ function X(b){return w1>w0?(wh(b)-w0)/(w1-w0)*2-1:0}
+ function Z(n){return R.length>1?n/(R.length-1)*2-1:0}
+ var grid=R.map(function(r,a){return C.map(function(b){var k=r.id+'|'+b.id,o=g[k];if(!o)return null;var h=o.v,pv=G.sp[k];if(e<1)h=pv==null?h*e:pv+(h-pv)*e;sd[k]=h;var q=pj(X(b),(mx?h/mx:0)*2-1,Z(a));q.h=mx?h/mx:0;q.v=o.v;return q})});
+ G.sdisp=sd;
+ var a,d,pts=[];
+ for(a=0;a<R.length-1;a++)for(d=0;d<C.length-1;d++){var p1=grid[a][d],p2=grid[a][d+1],p3=grid[a+1][d+1],p4=grid[a+1][d];if(p1&&p2&&p3&&p4){c.globalAlpha=.55;c.fillStyle=hue((p1.h+p2.h+p3.h+p4.h)/4);c.beginPath();c.moveTo(p1.x,p1.y);c.lineTo(p2.x,p2.y);c.lineTo(p3.x,p3.y);c.lineTo(p4.x,p4.y);c.closePath();c.fill()}}
+ c.globalAlpha=.85;c.strokeStyle=acc;c.lineWidth=1.5;
+ function path(list){var st=false;c.beginPath();list.forEach(function(q){if(!q){st=false;return}if(st)c.lineTo(q.x,q.y);else c.moveTo(q.x,q.y);st=true});c.stroke()}
+ grid.forEach(path);
+ C.forEach(function(b,j){path(grid.map(function(row){return row[j]}))});
+ c.globalAlpha=1;
+ grid.forEach(function(row){row.forEach(function(q){if(q){pts.push(q);c.fillStyle=hue(q.h);c.beginPath();c.arc(q.x,q.y,3.8,0,7);c.fill()}})});
+ if(pts.length<=40){c.fillStyle=ink;c.font='10px Barlow,sans-serif';c.textAlign='left';pts.forEach(function(q){c.fillText(q.v.toFixed(1),q.x+5,q.y-5)})}
+ c.fillStyle=mute;c.font='11px Barlow,sans-serif';c.textAlign='right';
+ R.forEach(function(p,i){var q=pj(-1.08,-1,Z(i));c.fillText(p.n,q.x,q.y+4)});
+ c.textAlign='center';var l1=pj(-1,-1.12,1),l2=pj(1,-1.12,1),l3=pj(0,-1.28,1),l4=pj(-1.12,1,1);
+ c.fillText(Math.round(w0)+' Wh',l1.x,l1.y+4);c.fillText(Math.round(w1)+' Wh',l2.x,l2.y+4);c.fillText(mx.toFixed(0)+' min',l4.x,l4.y);
+ c.fillStyle=ink;c.fillText('Battery energy →',l3.x,l3.y+4);c.fillText('Height = flight time',l4.x,l4.y-12)}
+function byId(id){var r;Object.keys(D).forEach(function(k){D[k].forEach(function(p){if(p.id===id)r=p})});return r}
+function gfmt(k,v){var l=GL[k];return(l[1]==='$'?'$':'')+v.toFixed(l[2])+(l[1]==='$'?'':l[1])}
+function enumBuilds(all){var orig=SEL,tmp={},out=[],k;for(k in orig)tmp[k]=orig[k];if(all)CORE.forEach(function(c){delete tmp[c]});SEL=tmp;
+ try{(function rec(i){if(out.length>4000)return;
+  if(i===6){var s=stats();out.push({ids:CORE.map(function(c){return tmp[c].id}),pr:s.pr,mi:s.mins,tw:s.tw,th:s.thrust,w:s.w,sz:tmp.frame.size});return}
+  var t=CORE[i];if(tmp[t]){rec(i+1);return}
+  D[t].forEach(function(p){if(p.stock==='out')return;if(why(t,p))return;tmp[t]=p;rec(i+1);delete tmp[t]})})(0)}finally{SEL=orig}
+ if(budget)out=out.filter(function(b){return b.pr<=budget});return out}
+function refreshG(){var d=document.getElementById('g3');if(!d||!d.open)return;var full=CORE.every(function(k){return SEL[k]});
+ G.cur=full?CORE.map(function(k){return SEL[k].id}).join():'';G.all=full||!G.match;G.pts=enumBuilds(G.all);G.hov=null;startAnim();drawG();ginfo()}
+function ginfo(){var el=document.getElementById('g3i'),b=G.hov;
+ if(G.view==='s'){el.textContent='Each point is the average flight time of the builds that use that motor and battery. Along the row: battery energy. Depth: motor. Height: flight time. A missing point means that pair doesn’t work together.';return}
+ if(b){el.innerHTML='<b>'+b.ids.map(function(id){return esc(byId(id).n)}).join(', ')+'</b><br>'+Object.keys(GL).map(function(k){return GL[k][0]+' '+gfmt(k,b[k])}).join(' · ')+'<br>Click to use this build.';return}
+ el.textContent=G.pts.length?G.pts.length+' possible builds'+(G.all?' (all combinations)':' that fit your choices')+'. Drag to rotate, point at a dot to inspect it, click a dot to use that build. A ring marks your current build.':'No complete build fits your choices. Remove a part to see options again.'}
+function drawG(){var cv=document.getElementById('g3c');if(!cv||!cv.offsetParent)return;
+ var dp=window.devicePixelRatio||1,W=cv.clientWidth,H=cv.clientHeight;cv.width=W*dp;cv.height=H*dp;
+ var c=cv.getContext('2d');c.setTransform(dp,0,0,dp,0,0);
+ var cs=getComputedStyle(document.documentElement),ink=cs.getPropertyValue('--ink'),mute=cs.getPropertyValue('--mute'),line=cs.getPropertyValue('--line'),acc=cs.getPropertyValue('--acc');
+ glegend();var P=G.pts,A=G.ax,rg=A.map(function(k){var lo=1e9,hi=-1e9;P.forEach(function(b){lo=Math.min(lo,b[k]);hi=Math.max(hi,b[k])});return[lo,hi]});
+ function nm(v,i){var r=rg[i];return r[1]>r[0]?(v-r[0])/(r[1]-r[0])*2-1:0}
+ function pj(x,y,z){var cy=Math.cos(G.yaw),sy=Math.sin(G.yaw),cp=Math.cos(G.pitch),sp=Math.sin(G.pitch),x1=x*cy+z*sy,z1=-x*sy+z*cy,y1=y*cp-z1*sp,z2=y*sp+z1*cp,f=1/(1+z2*.18),sc=Math.min(W,H)*.3;return{x:W/2+x1*sc*f,y:H/2-y1*sc*f,d:z2,f:f}}
+ var cn=[[-1,-1,-1],[1,-1,-1],[1,1,-1],[-1,1,-1],[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]],ed=[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
+ c.strokeStyle=line;c.lineWidth=1;ed.forEach(function(e){var a=pj.apply(null,cn[e[0]]),b=pj.apply(null,cn[e[1]]);c.beginPath();c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);c.stroke()});
+ c.fillStyle=mute;c.font='12px Barlow,sans-serif';c.textAlign='center';
+ function tx(s,x,y,z){var q=pj(x,y,z);c.fillText(s,q.x,q.y+4)}
+ if(P.length&&G.view!=='s'){[[0,[-1,-1.12,-1],[1,-1.12,-1],[0,-1.3,-1]],[1,[-1.12,-1,-1],[-1.12,1,-1],[-1.4,0,-1]],[2,[-1.12,-1.12,-1],[-1.12,-1.12,1],[-1.3,-1.3,0]]].forEach(function(a){var i=a[0],k=A[i];tx(gfmt(k,rg[i][0]),a[1][0],a[1][1],a[1][2]);tx(gfmt(k,rg[i][1]),a[2][0],a[2][1],a[2][2]);c.fillStyle=ink;tx(GL[k][0],a[3][0],a[3][1],a[3][2]);c.fillStyle=mute})}
+ var ap=G.t0?Math.min(1,(performance.now()-G.t0)/450):1,e=1-Math.pow(1-ap,3);
+ if(G.view==='s'){G.proj=[];surf(c,pj,ink,mute,acc,e);if(ap<1&&!G.raf){G.raf=1;requestAnimationFrame(function(){G.raf=0;drawG()})}return}
+ var cm={},disp={};cinfo().forEach(function(x){cm[x[0]]=x[1]});
+ var pp=P.map(function(b){var key=b.ids.join(),c0=[nm(b[A[0]],0),nm(b[A[1]],1),nm(b[A[2]],2)],pv=G.pc[key],nw=!pv;if(pv&&e<1)c0=[pv[0]+(c0[0]-pv[0])*e,pv[1]+(c0[1]-pv[1])*e,pv[2]+(c0[2]-pv[2])*e];disp[key]=c0;var q=pj(c0[0],c0[1],c0[2]);q.b=b;q.a=nw?e:1;return q});G.disp=disp;G.proj=pp;
+ pp.slice().sort(function(a,b){return b.d-a.d}).forEach(function(q){c.globalAlpha=.78*q.a;c.fillStyle=cm[ckey(q.b)]||'#888';c.beginPath();c.arc(q.x,q.y,(2.2+2.4*q.f)*(.4+.6*q.a),0,7);c.fill()});c.globalAlpha=1;c.lineWidth=2;
+ pp.forEach(function(q){if(G.cur&&q.b.ids.join()===G.cur){c.strokeStyle=ink;c.beginPath();c.arc(q.x,q.y,9,0,7);c.stroke()}if(q.b===G.hov){c.strokeStyle=acc;c.beginPath();c.arc(q.x,q.y,8,0,7);c.stroke()}});if(ap<1&&!G.raf){G.raf=1;requestAnimationFrame(function(){G.raf=0;drawG()})}}
+function applyBuild(b){SNAP=Object.assign({},SEL);var a0=metrics();b.ids.forEach(function(id){Object.keys(D).forEach(function(k){D[k].forEach(function(p){if(p.id===id)SEL[k]=p})})});LAST={name:'Picked build from 3D view',a:a0,b:metrics()};fxView=null;render()}
+(function(){var cv=document.getElementById('g3c'),drag=null;
+ function hit(e){var r=cv.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top,best=null,bd=144;G.proj.forEach(function(q){var d=(q.x-px)*(q.x-px)+(q.y-py)*(q.y-py);if(d<bd){bd=d;best=q.b}});return best}
+ function rot(dx,dy){G.yaw+=dx;G.pitch=Math.max(-1.3,Math.min(1.3,G.pitch+dy));drawG()}
+ cv.onpointerdown=function(e){cv.setPointerCapture(e.pointerId);drag={x:e.clientX,y:e.clientY,m:0}};
+ cv.onpointermove=function(e){if(drag){var dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.m+=Math.abs(dx)+Math.abs(dy);drag.x=e.clientX;drag.y=e.clientY;rot(dx*.01,dy*.01);return}var b=hit(e);if(b!==G.hov){G.hov=b;drawG();ginfo()}};
+ cv.onpointerup=function(e){var m=drag?drag.m:99;drag=null;if(m<5){var b=hit(e);if(b){G.hov=b;ginfo();applyBuild(b)}}};
+ cv.onpointerleave=function(){if(!drag&&G.hov){G.hov=null;drawG();ginfo()}};
+ cv.onkeydown=function(e){var k={ArrowLeft:[-.1,0],ArrowRight:[.1,0],ArrowUp:[0,-.1],ArrowDown:[0,.1]}[e.key];if(k){e.preventDefault();rot(k[0],k[1])}};
+ ['gx','gy','gz'].forEach(function(id,i){var s=document.getElementById(id);s.innerHTML=Object.keys(GL).map(function(k){return '<option value="'+k+'">'+GL[k][0]+'</option>'}).join('');s.value=G.ax[i];s.onchange=function(){G.ax[i]=this.value;startAnim();drawG()}});
+ document.getElementById('g3g').innerHTML=Object.keys(GC).map(function(k){return '<span><i style="background:'+GC[k]+'"></i>'+k+'" frame</span>'}).join('')+'<span>Ring: your build</span>';
+ document.getElementById('gm').onchange=function(){G.match=this.checked;refreshG()};
+ document.getElementById('g3').ontoggle=refreshG;window.addEventListener('resize',drawG);
+ document.getElementById('gv').onchange=function(){G.view=this.value;['gx','gy','gz'].forEach(function(id){document.getElementById(id).disabled=G.view==='s'});G.hov=null;startAnim();drawG();ginfo()};
+ document.getElementById('gc').onchange=function(){G.col=this.value;drawG()}})();
+function refreshC(){var d=document.getElementById('g2');if(!d||!d.open)return;var t=document.getElementById('cs').value,k=document.getElementById('cm').value,rows=[],gm=0,dir=GD[k];
+ D[t].forEach(function(p){var on=SEL[t]===p,w=on?null:why(t,p),r=null;if(!w&&!on&&p.stock==='out')w='Out of stock';
+  if(!w){var o=SEL[t];SEL[t]=p;var b=enumBuilds(false);SEL[t]=o;
+   if(b.length){var v=b.map(function(x){return x[k]}),s=0;v.forEach(function(x){s+=x});r={lo:Math.min.apply(null,v),hi:Math.max.apply(null,v),av:s/v.length};gm=Math.max(gm,r.hi)}else w='No complete build works with this part'}
+  rows.push({p:p,on:on,w:w,r:r})});
+ var best=null;rows.forEach(function(x){if(x.r&&(!best||(x.r.av-best.r.av)*dir>0))best=x});
+ function f(v){return gm?v/gm*100:0}
+ document.getElementById('cmp').innerHTML=rows.map(function(x){var p=x.p,r=x.r;
+  if(!r)return '<div class="cr off"><div class="ch2"><span>'+esc(p.n)+'</span></div><div class="why">'+esc(x.w)+'</div></div>';
+  var same=gfmt(k,r.lo)===gfmt(k,r.hi);
+  return '<div class="cr"><div class="ch2"><span>'+(x.on?'<b>'+esc(p.n)+'</b> (selected)':esc(p.n))+(x===best?' \u2605':'')+'</span><span>'+(same?gfmt(k,r.av):gfmt(k,r.lo)+' to '+gfmt(k,r.hi)+' (avg '+gfmt(k,r.av)+')')+'</span></div><div class="cb"><i class="cl" style="width:'+f(r.lo)+'%"></i><i class="ch3" style="left:'+f(r.lo)+'%;width:'+(f(r.hi)-f(r.lo))+'%"></i><b style="left:'+f(r.av)+'%"></b></div></div>'}).join('')}
+(function(){var s=document.getElementById('cs'),m=document.getElementById('cm');
+ s.innerHTML=STEPS.map(function(x){return '<option value="'+x[0]+'">'+x[1].replace(' (optional)','')+'</option>'}).join('');
+ m.innerHTML=Object.keys(GL).map(function(k){return '<option value="'+k+'">'+GL[k][0]+'</option>'}).join('');
+ s.value='motor';m.value='mi';s.onchange=m.onchange=refreshC;document.getElementById('g2').ontoggle=refreshC})();
+document.getElementById('cattpl').onclick=function(){document.getElementById('cat').value=JSON.stringify(D,null,1)};
+document.getElementById('catload').onclick=function(){var msg=document.getElementById('catmsg');try{var o=JSON.parse(document.getElementById('cat').value),n=0;Object.keys(D).forEach(function(k){if(Array.isArray(o[k])&&o[k].length){if(!o[k].every(function(p){return p&&typeof p.id==='string'&&typeof p.n==='string'&&typeof p.w==='number'}))throw new Error(k+' parts need id, n and w');D[k]=o[k];n+=o[k].length}});SEL={};document.getElementById('presets').hidden=true;msg.textContent='Loaded '+n+' parts. Categories you left out keep the built-in parts.';render()}catch(x){msg.textContent='Could not load: '+x.message}};
+var SIM=null,SNAP=null,Snd={on:false,ctx:null,o:[],g:null};
+var HIST=[],REDO=[],HC='',HS={},UNDOING=false;
+function trackHist(){var c=CODE();if(c!==HC){if(!UNDOING){HIST.push(HS);if(HIST.length>40)HIST.shift();REDO=[]}HC=c}HS=Object.assign({},SEL);UNDOING=false}
+function undo(){if(!HIST.length)return;REDO.push(Object.assign({},SEL));SEL=HIST.pop();UNDOING=true;LAST=null;fxView=null;SNAP=null;render()}
+function redo(){if(!REDO.length)return;HIST.push(Object.assign({},SEL));SEL=REDO.pop();UNDOING=true;LAST=null;fxView=null;SNAP=null;render()}
+document.addEventListener('keydown',function(ev){var t=ev.target&&ev.target.tagName;if(t==='INPUT'||t==='TEXTAREA'||t==='SELECT')return;var m=ev.ctrlKey||ev.metaKey;if(m&&!ev.shiftKey&&ev.key==='z'){ev.preventDefault();undo()}else if(m&&(ev.key==='y'||(ev.shiftKey&&ev.key==='z'))){ev.preventDefault();redo()}});
+function wcHtml(){var s=stats();if(!s.done)return '';var w=s.w,c=w<250?['Under 250 g','This is often the lightest regulatory class, with the fewest restrictions.']:w<2000?['250 g to 2 kg','Many countries require registration or a licence in this class.']:['Over 2 kg','This usually has the strictest rules (registration, licence, limited areas).'];return '<p class="wc"><b>Weight class: '+c[0]+'.</b> '+c[1]+' Rules vary by country, so check yours before flying.</p>'}
+function CODE(){return CORE.concat(['rx','vtx','gps']).filter(function(k){return SEL[k]}).map(function(k){return SEL[k].id}).join('.')}
+function updateShare(){var c=CODE(),http=/^https?:/.test(location.href),base=location.href.split('#')[0],i=document.getElementById('shl');if(i)i.value=c?(http?base+'#b='+c:c):'Pick some parts first';try{history.replaceState(null,'',c?base+'#b='+c:base)}catch(e){}}
+function loadCode(s){var ids=String(s).replace(/^[^]*b=/,'').trim().split('.'),keep=SEL,tmp={},n=0,sk=0;
+ ids.forEach(function(id){Object.keys(D).forEach(function(k){D[k].forEach(function(p){if(p.id!==id)return;SEL=tmp;var bad=why(k,p);SEL=keep;if(bad)sk++;else{tmp[k]=p;n++}})})});
+ if(n){SEL=tmp;LAST=null;fxView=null;SNAP=null;render()}return{n:n,sk:sk}}
+function sndStart(f){if(!Snd.on||!Snd.ctx)return;sndStop();var c=Snd.ctx,g=c.createGain(),lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=900;g.gain.value=0;g.gain.linearRampToValueAtTime(.05,c.currentTime+.6);lp.connect(g);g.connect(c.destination);Snd.g=g;Snd.o=[0,1,2,3].map(function(i){var o=c.createOscillator();o.type='sawtooth';o.frequency.value=f*(1+i*.013);o.connect(lp);o.start();return o})}
+function sndSet(f){Snd.o.forEach(function(o,i){o.frequency.setTargetAtTime(f*(1+i*.013),Snd.ctx.currentTime,.1)})}
+function sndStop(){if(Snd.g){var g=Snd.g,o=Snd.o,c=Snd.ctx;g.gain.setTargetAtTime(0,c.currentTime,.15);setTimeout(function(){o.forEach(function(x){try{x.stop()}catch(e){}})},500)}Snd.g=null;Snd.o=[]}
+function droneFor(sel){var k=SEL;SEL=sel;try{return droneSvg()}finally{SEL=k}}
+function cmpHtml(){if(!SNAP)return '';var ch=STEPS.filter(function(s){return SNAP[s[0]]!==SEL[s[0]]});if(!ch.length)return '';
+ return '<details class="ba" open><summary><b>Before and after</b></summary><div class="dcmp"><figure><figcaption>Before</figcaption>'+droneFor(SNAP)+'</figure><figure><figcaption>After</figcaption>'+droneFor(SEL)+'</figure></div><ul class="chg">'+ch.map(function(s){var a=SNAP[s[0]],b=SEL[s[0]];return '<li>'+s[1]+': '+(a?esc(a.n):'none')+' → '+(b?esc(b.n):'none')+'</li>'}).join('')+'</ul></details>'}
+function droneSvg(){SIM=null;sndStop();var f=SEL.frame,m=SEL.motor,r=SEL.prop,e=SEL.esc,c=SEL.fc,b=SEL.battery,v=SEL.vtx,g=SEL.gps,x=SEL.rx,st=stats(),
+ s=(f&&f.size)||(m&&m.cls)||(r&&r.size)||5,L=(38+s*6)*.707,pr=6+s*2.1,spin=m&&r,dur=st.done?Math.max(.1,Math.min(.9,1.2/st.tw)):.6,
+ K=[[-1,-1],[1,-1],[-1,1],[1,1]],o='<svg class="dsvg" viewBox="0 0 300 220" style="--d:'+dur.toFixed(2)+'s" role="group" aria-label="Live drone diagram. Select a part to jump to its step.">',arms='',mot='',blades='';
+ function grp(p,cls,label,body){return '<g data-p="'+p+'" class="'+cls+'"><title>'+label+'</title>'+body+'</g>'}
+ function nm(p,t){return p?t+': '+esc(p.n):t+' (choose one)'}
+ K.forEach(function(q,i){var cx=150+q[0]*L,cy=110+q[1]*L;arms+='<line class="arm" x1="150" y1="110" x2="'+cx+'" y2="'+cy+'"/>';mot+='<circle cx="'+cx+'" cy="'+cy+'" r="7"/>';
+  if(r){var n=/tri/.test(r.n)?3:2,bl='',k;for(k=0;k<n;k++)bl+='<ellipse rx="'+pr+'" ry="3.2" transform="rotate('+k*180/n+')"/>';blades+='<g transform="translate('+cx+' '+cy+')"><g class="'+(spin?'spin':'')+(i%2?' rev':'')+'">'+bl+'</g></g>'}
+  else blades+='<circle cx="'+cx+'" cy="'+cy+'" r="'+pr+'"/>'});
+ o+=grp('frame',f?'d-on':'d-gh',nm(f,'Frame'),arms+'<rect x="124" y="60" width="52" height="100" rx="12"/>');
+ o+=grp('motor',m?'d-on':'d-gh',nm(m,'Motors'),mot);
+ o+=grp('prop',r?'pr-on':'pr-gh',nm(r,'Propellers'),blades);
+ o+=grp('esc',e?'d-on':'d-gh',nm(e,'ESC'),'<rect x="134" y="74" width="32" height="32" rx="4"/>');
+ o+=grp('fc',c?'d-on':'d-gh',nm(c,'Flight controller'),'<rect x="140" y="80" width="20" height="20" rx="3"/>');
+ o+=grp('battery',b?'d-on':'d-gh',nm(b,'Battery'),'<rect x="128" y="116" width="44" height="38" rx="6"'+(b?' style="fill:'+(b.cells>=6?'#e0a21a':b.cells>=4?'#2fa36b':'#3b8fe0')+'"':'')+'/>'+(b?'<text x="150" y="139" text-anchor="middle" style="fill:#fff;stroke:none;font:700 13px Barlow,sans-serif">'+b.cells+'S</text>':''));
+ o+=grp('vtx',v?'d-on':'d-gh',nm(v,'Camera and video link'),'<circle cx="150" cy="52" r="8"/><circle cx="150" cy="52" r="3.5"/>');
+ o+=grp('gps',g?'d-on':'d-gh',nm(g,'GPS'),'<circle cx="150" cy="172" r="9"/><circle cx="150" cy="172" r="4"/>');
+ o+=grp('rx',x?'d-on':'d-gh',nm(x,'Receiver'),'<line class="arm" x1="170" y1="148" x2="204" y2="184" style="stroke-width:2.5"/>');
+ return o+'</svg>'}
+function hudHtml(){var d=stats().done;return '<div class="hud"><button class="b" id="fly"'+(d?'':' disabled')+'>Test flight</button><span id="hud">'+(d?'Simulates a hover flight, draining the battery at your build\u2019s rate.':'Pick all six core parts to unlock a test flight.')+'</span><div class="hbar"><i id="hbar"></i></div></div>'+wcHtml()}
+function fly(){var s=stats(),dv=document.getElementById('drone'),hd=document.getElementById('hud');if(!s.done||!dv||!hd||SIM)return;
+ if(s.tw<1.3){hd.textContent='Not enough thrust to lift off. Choose stronger motors or a lighter battery.';dv.classList.add('shake');setTimeout(function(){dv.classList.remove('shake')},600);return}
+ var tok=SIM={},len=Math.max(6,Math.min(14,s.mins))*1000,t0=performance.now();dv.classList.add('lift');var f0=70+Math.min(s.tw,12)*14;sndStart(f0);
+ (function tick(n){if(SIM!==tok)return;var p=Math.min(1,(n-t0)/len),h=document.getElementById('hud'),bar=document.getElementById('hbar');
+  h.textContent='Battery '+Math.round((1-p)*100)+'% \u00b7 '+(s.mins*(1-p)).toFixed(1)+' min left';bar.style.width=((1-p)*100)+'%';sndSet(f0*(1-.15*p));
+  if(p<1)requestAnimationFrame(tick);else{dv.classList.remove('lift');SIM=null;sndStop();h.textContent='Landed after about '+s.mins.toFixed(1)+' min of hover flight.'}})(t0)}
+function hl(t){document.querySelectorAll('#drone [data-p]').forEach(function(n){n.classList.toggle('on',n.dataset.p===t)})}
+document.addEventListener('mouseover',function(ev){var o=ev.target.closest&&ev.target.closest('.opt');hl(o?o.dataset.t:null)});
+document.addEventListener('focusin',function(ev){var o=ev.target.closest&&ev.target.closest('.opt');hl(o?o.dataset.t:null)});
+document.addEventListener('click',function(ev){if(ev.target.id==='fly'){fly();return}
+if(ev.target.id==='undo'){undo();return}if(ev.target.id==='redo'){redo();return}if(ev.target.id==='print'){try{window.print()}catch(x){}return}
+if(ev.target.id==='snd'){Snd.on=!Snd.on;if(Snd.on){try{Snd.ctx=Snd.ctx||new (window.AudioContext||window.webkitAudioContext)();Snd.ctx.resume()}catch(x){Snd.on=false}}else sndStop();ev.target.setAttribute('aria-pressed',Snd.on);ev.target.textContent=Snd.on?'Sound on':'Sound off';return}
+if(ev.target.id==='share'){var sh=document.getElementById('shr');sh.open=true;sh.scrollIntoView({block:'center'});return}
+if(ev.target.id==='shcopy'){var si=document.getElementById('shl'),sm=document.getElementById('shmsg');si.select();try{navigator.clipboard.writeText(si.value).then(function(){sm.textContent='Link copied'},function(){sm.textContent='Select the link and copy it'})}catch(x){sm.textContent='Select the link and copy it'}return}
+if(ev.target.id==='shload'){var r=loadCode(document.getElementById('shin').value);document.getElementById('shmsg').textContent=r.n?'Loaded '+r.n+' parts'+(r.sk?', skipped '+r.sk+' that don’t work together':''):'No matching parts found in that code';return}var p=ev.target.closest&&ev.target.closest('#drone [data-p]');if(p){var st=document.getElementById('st-'+p.dataset.p);if(st){st.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});st.classList.remove('flash');void st.offsetWidth;st.classList.add('flash')}}});
+document.body.classList.add('intro');setTimeout(function(){document.body.classList.remove('intro')},1500);
+if(/b=/.test(location.hash))loadCode(location.hash);
+render();
+</script>
+</body>
+</html>
